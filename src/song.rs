@@ -4,11 +4,11 @@ use failure::{ Error, err_msg };
 
 #[derive(Debug)]
 pub struct SongInfo {
-    track: i32,
-    title: String,
-    album: String,
-    artist: String,
-    art: String,
+    pub track: i32,
+    pub title: String,
+    pub album: String,
+    pub artist: String,
+    pub art: String,
 }
 
 impl SongInfo {
