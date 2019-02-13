@@ -1,22 +1,23 @@
 use crate::song::SongInfo;
+use crate::cleaners;
 use failure::{ Error, err_msg };
 
 
 pub fn fetch_lyrics(song: &SongInfo) -> Result<String, Error> {
-    let url = make_song_url(&song);
+    let url = cleaners::default(&song);
     println!("{}", &url);
     let content = reqwest::get(&url)?.text()?;
     let lyrics = clear_lyrics(&content)?;
     Ok(lyrics)
 }
 
-fn make_song_url(song: &SongInfo) -> String {
+pub fn make_song_url(artist: &str, album: &str, track: i32) -> String {
     // Example URL: http://www.darklyrics.com/lyrics/soilwork/theridemajestic.html#8
     format!(
         "http://www.darklyrics.com/lyrics/{}/{}.html#{}", 
-        &song.artist.to_lowercase().replace(" ", ""),
-        &song.album.to_lowercase().replace(" ", ""),
-        &song.track
+        artist.to_lowercase().replace(" ", ""),
+        album.to_lowercase().replace(" ", ""),
+        track
     )
 }
 
@@ -31,3 +32,4 @@ fn clear_lyrics(lyrics: &str) -> Result<String, Error> {
 
     Ok(lyrics)
 }
+
