@@ -32,5 +32,15 @@ impl SongInfo {
 
         Ok(SongInfo { track, title, album, artist, art })
     }
+
+    pub fn dummy() -> SongInfo {
+        SongInfo {
+            track: 1337,
+            title: String::from("Dummy Song Title"),
+            album: String::from("Dummy Album Name"),
+            artist: String::from("Dummy Artist Name"),
+            art: String::from("Dummy Album Art")
+        }
+    }
 }
 
