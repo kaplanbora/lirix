@@ -15,7 +15,7 @@ fn main() {
             util::clear_and_print("Waiting for a song");
         } else {
             let new_song = new_song.unwrap();
-            if song.title != new_song.title {
+            if song != new_song {
                 song = new_song;
                 util::print_lyrics(&song);
             }

@@ -2,6 +2,7 @@ use crate::song::SongInfo;
 use crate::cleaners;
 use failure::{ Error, err_msg };
 use regex::Regex;
+use std::collections::HashMap;
 
 
 fn fetch_lyrics(song: &SongInfo) -> Result<String, Error> {
@@ -14,7 +15,6 @@ fn fetch_lyrics(song: &SongInfo) -> Result<String, Error> {
         clear_lyrics(&content)
     }
 }
-
 
 fn clear_lyrics(lyrics: &str) -> Result<String, Error> {
     let lyrics: Vec<&str> = lyrics.split("<div class=\"lyrics\">").collect();
@@ -35,33 +35,36 @@ fn clear_html(lyrics: &str) -> String {
 
 pub fn get_song_lyrics(song: &SongInfo) -> Result<String, Error> {
     let lyrics = fetch_lyrics(&song)?;
-    let songs = split_songs(lyrics);
-    let song_lyrics = songs.get(song.track as usize).ok_or(err_msg("Error while splitting the songs"))?;
+    let songs = get_album_lyrics(lyrics);
+    let song_lyrics = songs.get(&format!("{}. {}", song.track, song.title))
+        .ok_or(err_msg("Error while splitting the songs"))?;
     let clean_lyrics = clear_html(song_lyrics);
     Ok(clean_lyrics)
 }
 
-fn split_songs(lyrics: String) -> Vec<String> {
-    let mut songs: Vec<String> = vec!();
-    let mut song = String::new();
+fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
+    let mut album_lyrics: HashMap<String, String> = HashMap::new();
+    let mut song_lyrics = String::new();
+    let mut title = String::new();
 
     for line in lyrics.split("\n") {
-
-        if line.starts_with("<h3><a name=") || line.starts_with("<div class=\"note\">") {
-
-            if !song.is_empty() {
-                songs.push(song.clone());
-                song.clear();
+        if line.starts_with("<h3><a name=") {
+            if !song_lyrics.is_empty() {
+                album_lyrics.insert(title.clone(), song_lyrics.clone());
+                song_lyrics.clear();
             }
-
-            song.push_str(line);
-            song.push_str("\n");
-            song.push_str("\n");
+            title = clear_html(&line);
+        } else if line.starts_with("<div class=\"note\">") {
+            if !song_lyrics.is_empty() {
+                album_lyrics.insert(title.clone(), song_lyrics.clone());
+                song_lyrics.clear();
+            }
+            break;
         } else {
-            song.push_str(line);
-            song.push_str("\n");
+            song_lyrics.push_str(line);
+            song_lyrics.push_str("\n");
         }
     }
 
-    songs
+    album_lyrics
 }

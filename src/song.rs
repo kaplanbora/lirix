@@ -1,8 +1,7 @@
 use mpris::Metadata;
 use failure::{ Error, err_msg };
 
-
-#[derive(Debug)]
+#[derive(Eq, PartialEq, Debug)]
 pub struct SongInfo {
     pub track: i32,
     pub title: String,
