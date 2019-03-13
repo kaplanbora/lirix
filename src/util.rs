@@ -6,7 +6,7 @@ use std::{thread, time};
 
 
 pub fn print_error(error: &Error) {
-    clear();
+    //clear();
     println!("Error: {}", error);
     for (i, cause) in error.iter_causes().enumerate() {
         print!("{}", "  ".repeat(i + 1));
@@ -45,7 +45,11 @@ pub fn clear_and_print(text: &str) {
 
 pub fn print_lyrics(song: &SongInfo) {
     match lyrics::get_song_lyrics(&song) {
-        Ok(lyrics) => clear_and_print(&format!("{} - {}\n{}", song.artist, song.album, lyrics)),
+        Ok(lyrics) => clear_and_print(&pretty_lyrics(&song, &lyrics)),
         Err(error) => print_error(&error),
     }
+}
+
+fn pretty_lyrics(song: &SongInfo, lyrics: &str) -> String {
+    format!("{} - {}\n{:02}. {}\n\n{}", song.artist, song.album, song.track, song.title, lyrics)
 }

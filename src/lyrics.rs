@@ -1,4 +1,5 @@
 use crate::song::SongInfo;
+use crate::cache;
 use crate::cleaners;
 use failure::{ Error, err_msg };
 use regex::Regex;
@@ -34,12 +35,19 @@ fn clear_html(lyrics: &str) -> String {
 }
 
 pub fn get_song_lyrics(song: &SongInfo) -> Result<String, Error> {
-    let lyrics = fetch_lyrics(&song)?;
-    let songs = get_album_lyrics(lyrics);
-    let song_lyrics = songs.get(&format!("{}. {}", song.track, song.title))
-        .ok_or(err_msg("Error while splitting the songs"))?;
-    let clean_lyrics = clear_html(song_lyrics);
-    Ok(clean_lyrics)
+    let cached_lyrics = cache::find_lyrics(&song);
+
+    let lyrics = if cached_lyrics.is_ok() {
+        cached_lyrics.unwrap()
+    } else {
+        let raw_lyrics = fetch_lyrics(&song)?;
+        let album_lyrics = get_album_lyrics(raw_lyrics);
+        let song_lyrics = album_lyrics.get(&format!("{}. {}", song.track, song.title))
+            .ok_or(err_msg("Song not found on album lyrics"))?;
+        clear_html(song_lyrics)
+    };
+
+    Ok(lyrics)
 }
 
 fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
@@ -54,6 +62,7 @@ fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
                 song_lyrics.clear();
             }
             title = clear_html(&line);
+            dbg!(&title);
         } else if line.starts_with("<div class=\"note\">") {
             if !song_lyrics.is_empty() {
                 album_lyrics.insert(title.clone(), song_lyrics.clone());
