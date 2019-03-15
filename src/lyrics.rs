@@ -44,7 +44,9 @@ pub fn get_song_lyrics(song: &SongInfo) -> Result<String, Error> {
         let album_lyrics = get_album_lyrics(raw_lyrics);
         let song_lyrics = album_lyrics.get(&format!("{}. {}", song.track, song.title))
             .ok_or(err_msg("Song not found on album lyrics"))?;
-        clear_html(song_lyrics)
+        let lyrics = clear_html(song_lyrics);
+        cache::save_lyrics(&song, &lyrics)?;
+        lyrics
     };
 
     Ok(lyrics)
