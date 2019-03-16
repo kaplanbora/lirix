@@ -42,8 +42,6 @@ fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
     let mut song_lyrics = String::new();
     let mut title = String::new();
 
-    dbg!(&lyrics);
-
     for line in lyrics.split("\n") {
         if line.starts_with("<h3><a name=") {
             if !song_lyrics.is_empty() {

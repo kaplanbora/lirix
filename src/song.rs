@@ -7,7 +7,7 @@ pub struct SongInfo {
     pub title: String,
     pub album: String,
     pub artist: String,
-    pub art: String,
+    pub art: Option<String>,
 }
 
 impl SongInfo {
@@ -15,19 +15,19 @@ impl SongInfo {
         let track_number = &metadata.track_number()
             .ok_or(err_msg("Track number not found"))?;
         let artists = &metadata.album_artists()
+            .or(metadata.artists())
             .ok_or(err_msg("Artist not found"))?;
         let album_name = &metadata.album_name()
             .ok_or(err_msg("Album name not found"))?;
-        let art_url = &metadata.art_url()
-            .ok_or(err_msg("Album art not found"))?;
         let title = &metadata.title()
             .ok_or(err_msg("Song title not found"))?;
+        let art = metadata.art_url()
+            .map(|url| url.to_string());
 
         let track = track_number.to_owned();
         let title = title.to_string();
         let album = album_name.to_string();
         let artist = artists[0].to_string();
-        let art = art_url.to_string();
 
         Ok(SongInfo { track, title, album, artist, art })
     }
@@ -38,7 +38,7 @@ impl SongInfo {
             title: String::from("Dummy Song Title"),
             album: String::from("Dummy Album Name"),
             artist: String::from("Dummy Artist Name"),
-            art: String::from("Dummy Album Art")
+            art: Some(String::from("Dummy Album Art"))
         }
     }
 }
