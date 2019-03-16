@@ -10,9 +10,6 @@ fn get_lyrics_div(lyrics: &str) -> Result<String, Error> {
     let lyrics: Vec<&str> = lyrics.split("<div class=\"lyrics\">").collect();
     let lyrics: &str = lyrics.get(1).ok_or(err_msg("Lyrics not found"))?;
 
-    let lyrics: Vec<&str> = lyrics.split("<div class=\"thanks\">").collect();
-    let lyrics: &str = lyrics.get(0).ok_or(err_msg("Thanks section not found"))?;
-
     let lyrics: String = lyrics.replace("<br />", "");
 
     Ok(lyrics)
@@ -45,6 +42,8 @@ fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
     let mut song_lyrics = String::new();
     let mut title = String::new();
 
+    dbg!(&lyrics);
+
     for line in lyrics.split("\n") {
         if line.starts_with("<h3><a name=") {
             if !song_lyrics.is_empty() {
@@ -52,8 +51,7 @@ fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
                 song_lyrics.clear();
             }
             title = clear_html(&line);
-            dbg!(&title);
-        } else if line.starts_with("<div class=\"note\">") {
+        } else if line.starts_with("<div class=\"note\">") || line.starts_with("<div class=\"thanks\">") {
             if !song_lyrics.is_empty() {
                 album_lyrics.insert(title.clone(), song_lyrics.clone());
                 song_lyrics.clear();
