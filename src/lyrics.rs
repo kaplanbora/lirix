@@ -6,18 +6,7 @@ use regex::Regex;
 use std::collections::HashMap;
 
 
-fn fetch_lyrics(song: &SongInfo) -> Result<String, Error> {
-    let url = cleaners::default(&song);
-    println!("{}", &url);
-    let content = reqwest::get(&url)?.text()?;
-    if content.is_empty() {
-        Err(err_msg(format!("Darklyrics returned empty body for url: \n{}", &url)))
-    } else {
-        clear_lyrics(&content)
-    }
-}
-
-fn clear_lyrics(lyrics: &str) -> Result<String, Error> {
+fn get_lyrics_div(lyrics: &str) -> Result<String, Error> {
     let lyrics: Vec<&str> = lyrics.split("<div class=\"lyrics\">").collect();
     let lyrics: &str = lyrics.get(1).ok_or(err_msg("Lyrics not found"))?;
 
@@ -40,11 +29,10 @@ pub fn get_song_lyrics(song: &SongInfo) -> Result<String, Error> {
     let lyrics = if cached_lyrics.is_ok() {
         cached_lyrics.unwrap()
     } else {
-        let raw_lyrics = fetch_lyrics(&song)?;
+        let raw_lyrics = get_lyrics_div(&cleaners::fetch_album_lyrics(&song)?)?;
         let album_lyrics = get_album_lyrics(raw_lyrics);
-        let song_lyrics = album_lyrics.get(&format!("{}. {}", song.track, song.title))
-            .ok_or(err_msg("Song not found on album lyrics"))?;
-        let lyrics = clear_html(song_lyrics);
+        let song_lyrics = cleaners::find_song_in_album(&album_lyrics, &song)?;
+        let lyrics = clear_html(&song_lyrics);
         cache::save_lyrics(&song, &lyrics)?;
         lyrics
     };
