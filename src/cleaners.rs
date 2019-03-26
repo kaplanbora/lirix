@@ -4,11 +4,12 @@ use regex::Regex;
 use failure::{ Error, err_msg };
 use std::collections::HashMap;
 
-/*
- * There are two kinds of cleaners
- * 1- Darklyrics url cleaner
- * 2- Downloaded album lyrics cleaner
- */
+
+pub fn fetch_album_lyrics(song: &SongInfo) -> Result<String, Error> {
+    fetch(&default_url(&song))
+        .or(fetch(&clear_pars(&song)))
+        .or(fetch(&clear_specials(&song)))
+}
 
 fn fetch(url: &str) -> Result<String, Error> {
     let message = format!("No lyrics found on url: \n{}", url);
@@ -28,19 +29,21 @@ fn default_url(song: &SongInfo) -> String {
     util::make_song_url(&song.artist, &song.album)
 }
 
-fn url_without_pars(song: &SongInfo) -> String {
+fn clear_pars(song: &SongInfo) -> String {
     let par_cleaner = Regex::new(r"\([^)]*\)").unwrap();
     let artist = par_cleaner.replace_all(&song.artist, "");
     let album = par_cleaner.replace_all(&song.album, "");
     util::make_song_url(&artist, &album)
 }
 
-pub fn fetch_album_lyrics(song: &SongInfo) -> Result<String, Error> {
-    fetch(&default_url(&song))
-        .or(fetch(&url_without_pars(&song)))
+fn clear_specials(song: &SongInfo) -> String {
+    let par_cleaner = Regex::new(r"[-_.,!@#$%^&*]").unwrap();
+    let artist = par_cleaner.replace_all(&song.artist, "");
+    let album = par_cleaner.replace_all(&song.album, "");
+    util::make_song_url(&artist, &album)
 }
 
-pub fn find_song_in_album(album_lyrics: &HashMap<String, String>, song: &SongInfo) -> Result<String, Error> {
+pub fn find_song_in_album(album_lyrics: HashMap<String, String>, song: &SongInfo) -> Result<String, Error> {
     with_track_and_title(&album_lyrics, song.track, &song.title)
         .or(with_title(&album_lyrics, &song.title))
         .or(with_track(&album_lyrics, song.track))

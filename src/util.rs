@@ -6,7 +6,7 @@ use std::{thread, time};
 
 
 pub fn print_error(error: &Error) {
-    //clear();
+    clear();
     println!("Error: {}", error);
     for (i, cause) in error.iter_causes().enumerate() {
         print!("{}", "  ".repeat(i + 1));

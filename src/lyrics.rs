@@ -9,9 +9,7 @@ use std::collections::HashMap;
 fn get_lyrics_div(lyrics: &str) -> Result<String, Error> {
     let lyrics: Vec<&str> = lyrics.split("<div class=\"lyrics\">").collect();
     let lyrics: &str = lyrics.get(1).ok_or(err_msg("Lyrics not found"))?;
-
     let lyrics: String = lyrics.replace("<br />", "");
-
     Ok(lyrics)
 }
 
@@ -27,8 +25,8 @@ pub fn get_song_lyrics(song: &SongInfo) -> Result<String, Error> {
         cached_lyrics.unwrap()
     } else {
         let raw_lyrics = get_lyrics_div(&cleaners::fetch_album_lyrics(&song)?)?;
-        let album_lyrics = get_album_lyrics(raw_lyrics);
-        let song_lyrics = cleaners::find_song_in_album(&album_lyrics, &song)?;
+        let album_lyrics = seperate_by_songs(raw_lyrics);
+        let song_lyrics = cleaners::find_song_in_album(album_lyrics, &song)?;
         let lyrics = clear_html(&song_lyrics);
         cache::save_lyrics(&song, &lyrics)?;
         lyrics
@@ -37,7 +35,7 @@ pub fn get_song_lyrics(song: &SongInfo) -> Result<String, Error> {
     Ok(lyrics)
 }
 
-fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
+fn seperate_by_songs(lyrics: String) -> HashMap<String, String> {
     let mut album_lyrics: HashMap<String, String> = HashMap::new();
     let mut song_lyrics = String::new();
     let mut title = String::new();
@@ -49,7 +47,7 @@ fn get_album_lyrics(lyrics: String) -> HashMap<String, String> {
                 song_lyrics.clear();
             }
             title = clear_html(&line);
-        } else if line.starts_with("<div class=\"note\">") || line.starts_with("<div class=\"thanks\">") {
+        } else if line.starts_with("<div class=\"thanks\">") || line.starts_with("<div class=\"note\">") {
             if !song_lyrics.is_empty() {
                 album_lyrics.insert(title.clone(), song_lyrics.clone());
                 song_lyrics.clear();
