@@ -5,7 +5,7 @@ authors = ["Bora Kaplan <kaplanbora@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-mpris = "1.1.1"
+mpris = "2.0.0-rc2"
 failure = "0.1.2"
 reqwest = "0.9.9"
 regex = "1.1.0"

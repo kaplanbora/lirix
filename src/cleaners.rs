@@ -1,14 +1,14 @@
 use crate::song::SongInfo;
 use crate::util;
+use failure::{err_msg, Error};
 use regex::Regex;
-use failure::{ Error, err_msg };
 use std::collections::HashMap;
-
 
 pub fn fetch_album_lyrics(song: &SongInfo) -> Result<String, Error> {
     fetch(&default_url(&song))
         .or(fetch(&clear_pars(&song)))
         .or(fetch(&clear_specials(&song)))
+        .or(fetch(&devin(&song)))
 }
 
 fn fetch(url: &str) -> Result<String, Error> {
@@ -43,27 +43,43 @@ fn clear_specials(song: &SongInfo) -> String {
     util::make_song_url(&artist, &album)
 }
 
-pub fn find_song_in_album(album_lyrics: HashMap<String, String>, song: &SongInfo) -> Result<String, Error> {
+fn devin(song: &SongInfo) -> String {
+    let par_cleaner = Regex::new(r"[-_.,!@#$%^&*]").unwrap();
+    let album = par_cleaner.replace_all(&song.album, "");
+    util::make_song_url("devintownsend", &album)
+}
+
+pub fn find_song_in_album(
+    album_lyrics: HashMap<String, String>,
+    song: &SongInfo,
+) -> Result<String, Error> {
     with_track_and_title(&album_lyrics, song.track, &song.title)
         .or(with_title(&album_lyrics, &song.title))
         .or(with_track(&album_lyrics, song.track))
 }
 
-fn with_track_and_title(album_lyrics: &HashMap<String, String>, track: i32, title: &str) -> Result<String, Error> {
-    album_lyrics.get(&format!("{}. {}", track, title))
+fn with_track_and_title(
+    album_lyrics: &HashMap<String, String>,
+    track: i32,
+    title: &str,
+) -> Result<String, Error> {
+    album_lyrics
+        .get(&format!("{}. {}", track, title))
         .map(|lyrics| lyrics.to_string())
         .ok_or(err_msg("Song not found on album lyrics"))
 }
 
 fn with_title(album_lyrics: &HashMap<String, String>, title: &str) -> Result<String, Error> {
-    album_lyrics.iter()
+    album_lyrics
+        .iter()
         .find(|(song, _)| song.contains(title))
         .map(|(_, lyrics)| lyrics.to_string())
         .ok_or(err_msg("Song not found on album lyrics"))
 }
 
 fn with_track(album_lyrics: &HashMap<String, String>, track: i32) -> Result<String, Error> {
-    album_lyrics.iter()
+    album_lyrics
+        .iter()
         .find(|(song, _)| song.starts_with(&track.to_string()))
         .map(|(_, lyrics)| lyrics.to_string())
         .ok_or(err_msg("Song not found on album lyrics"))

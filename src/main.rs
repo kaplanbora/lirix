@@ -1,8 +1,7 @@
-use lirix::util;
 use lirix::dbus;
 use lirix::song::SongInfo;
+use lirix::util;
 use std::{thread, time};
-
 
 fn main() {
     let one_second = time::Duration::from_secs(1);
@@ -24,4 +23,3 @@ fn main() {
         thread::sleep(one_second);
     }
 }
-
